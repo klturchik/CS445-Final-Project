@@ -6,7 +6,7 @@
  * assignment: Quarter Project CP#1
  * date last modified: 11/01/2016
  *
- * purpose: This class holds the camera's position in the 3D space. 
+ * purpose: This class stores the camera's position in the 3D space. 
  *
  **********************************************************************/
 public class Vector3Float {

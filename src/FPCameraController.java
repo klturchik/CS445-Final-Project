@@ -3,11 +3,18 @@
  * author: Kyle Turchik, Vu Dao, Marco Roman
  * class: CS 445 - Computer Graphics
  *
- * assignment: Quarter Project CP#1
- * date last modified: 11/01/2016
+ * assignment: Quarter Project CP#2
+ * date last modified: 11/15/2016
  *
- * purpose: This program uses the LWGJL to render a cube and allows
- *          keyboard commands to move the cube around a space. 
+ * purpose: This class allows the player to control the camera through
+ *          keyboard commands and renders objects in the player's view.
+ * 
+ * controls:
+ *          W/A/S/D: Forward/Left/Backward/Right
+ *          Space Bar: Move Up
+ *          Left Shift: Move Down
+ *          Mouse: Look
+ *          Escape: Exit Game
  *
  **********************************************************************/
 
@@ -16,9 +23,12 @@ import org.lwjgl.input.Mouse;
 import org.lwjgl.opengl.Display;
 import static org.lwjgl.opengl.GL11.*;
 import org.lwjgl.Sys;
+import org.newdawn.slick.opengl.Texture;
+import org.newdawn.slick.opengl.TextureLoader;
+import org.newdawn.slick.util.ResourceLoader;
 
 public class FPCameraController {
-
+    //stores the camera's position
     private Vector3Float position = null;
     private Vector3Float lPosition = null;
     //the rotation around the Y axis of the camera
@@ -26,7 +36,11 @@ public class FPCameraController {
     //the rotation around the X axis of the camera
     private float pitch = 0.0f;
     private Vector3Float me;
+    //Ensures the chunks are only randomized once
+    private boolean firstGen;
+    private Chunk chunk;
 
+    //Constructor
     //instantiate position Vector3f to the x y z params.
     public FPCameraController(float x, float y, float z) {
         position = new Vector3Float(x, y, z);
@@ -34,6 +48,8 @@ public class FPCameraController {
         lPosition.x = 0f;
         lPosition.y = 15f;
         lPosition.z = 0f;
+        
+        firstGen = true;
     }
 
     //increment the camera's current yaw rotation
@@ -160,15 +176,23 @@ public class FPCameraController {
             //look through the camera before you draw anything
             camera.lookThrough();
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-            //you would draw your scene here.
-            render();
+
+            //Draw the scene
+            if (firstGen) {
+                chunk = new Chunk(-30,1,-75);
+                firstGen = false;
+            }
+            chunk.render();
+            
             //draw the buffer to the screen
             Display.update();
             Display.sync(60);
         }
         Display.destroy();
     }
+}
 
+/*OBSOLETE RENDER METHOD
     //Render simple 3D cube w/ six different colors
     private void render() {
         try {
@@ -269,4 +293,5 @@ public class FPCameraController {
 
         }
     }
-}
+*/
+
