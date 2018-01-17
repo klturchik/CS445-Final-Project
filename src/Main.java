@@ -3,8 +3,8 @@
  * author: Kyle Turchik, Vu Dao, Marco Roman
  * class: CS 445 - Computer Graphics
  *
- * assignment: Quarter Project CP#1
- * date last modified: 11/01/2016
+ * assignment: Quarter Project CP#3
+ * date last modified: 11/29/2016
  *
  * purpose: This program uses the LWJGL to render a Minecraft like
  *          scene and allows the player to navigate the scene using
@@ -12,6 +12,8 @@
  *
  **********************************************************************/
  
+import java.nio.FloatBuffer;
+import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.Display;
 import org.lwjgl.opengl.DisplayMode;
 import static org.lwjgl.opengl.GL11.*;
@@ -29,6 +31,9 @@ public class Main {
 
     private FPCameraController fp = new FPCameraController(0f, 0f, 0f);
 
+    private FloatBuffer lightPosition;
+    private FloatBuffer whiteLight;
+    
     public static void main(String[] args) {
         Main main = new Main();
         main.start();
@@ -61,7 +66,7 @@ public class Main {
     // method: initGL
     // purpose: initializes original GL settings
     private void initGL() {
-        glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+        glClearColor(0.529f, 0.808f, 0.922f, 0.0f);
         glMatrixMode(GL_PROJECTION);
         glLoadIdentity();
         GLU.gluPerspective(100.0f, WINDOW_WIDTH / WINDOW_HEIGHT, 0.1f, 300.0f);
@@ -72,5 +77,20 @@ public class Main {
         glEnable(GL_DEPTH_TEST);
         glEnable(GL_TEXTURE_2D);
         glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+        
+        initLightArrays();
+        glLight(GL_LIGHT0, GL_POSITION, lightPosition); //sets our lightâ€™s position
+        glLight(GL_LIGHT0, GL_SPECULAR, whiteLight);//sets our specular light
+        glLight(GL_LIGHT0, GL_DIFFUSE, whiteLight);//sets our diffuse light
+        glLight(GL_LIGHT0, GL_AMBIENT, whiteLight);//sets our ambient light
+        glEnable(GL_LIGHTING);//enables our lighting
+        glEnable(GL_LIGHT0);//enables light0
+    }
+    
+    private void initLightArrays() {
+        lightPosition = BufferUtils.createFloatBuffer(4);
+        lightPosition.put(0.0f).put(0.0f).put(0.0f).put(1.0f).flip();
+        whiteLight = BufferUtils.createFloatBuffer(4);
+        whiteLight.put(1.0f).put(1.0f).put(1.0f).put(0.0f).flip();
     }
 }

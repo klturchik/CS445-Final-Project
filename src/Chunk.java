@@ -3,8 +3,8 @@
  * author: Kyle Turchik, Vu Dao, Marco Roman
  * class: CS 445 - Computer Graphics
  *
- * assignment: Quarter Project CP#2
- * date last modified: 11/15/2016
+ * assignment: Quarter Project CP#3
+ * date last modified: 11/29/2016
  *
  * purpose: This class randomly generates terrain and applies textures 
  *          to the various blocks.
@@ -24,8 +24,8 @@ public class Chunk {
 
     static final int CHUNK_SIZE = 30;
     static final int CUBE_LENGTH = 2;
-    static final float persistanceMin = 0.18f; 
-    static final float persistanceMax = 0.40f; 
+    static final float persistanceMin = 0.03f;
+    static final float persistanceMax = 0.06f;
     
     private Block[][][] Blocks;
     private int VBOVertexHandle;
@@ -34,6 +34,8 @@ public class Chunk {
     private int StartX, StartY, StartZ;
     private Random r;
     private Texture texture;
+    private String[] texFile = {"terrain.png","terrain_MortalCombat.png",
+        "terrain_Alien.png","terrain_Mayan.png"};
 
     public void render() {
         glPushMatrix();
@@ -48,10 +50,17 @@ public class Chunk {
         glPopMatrix();
 
     }
+    public void deleteTextures(int tex) {;
+        glDeleteTextures(1);
+        try {
+            texture = TextureLoader.getTexture("PNG",
+                ResourceLoader.getResourceAsStream(texFile[tex]));
+        } catch (Exception e) {
+            System.out.print(e);
+        }
+    }
 
-    public void rebuildMesh(
-        float startX, float startY, float startZ) {
-        
+    public void rebuildMesh(float startX, float startY, float startZ) {
         //Generate random seed
         Random random = new Random();
         
@@ -59,7 +68,8 @@ public class Chunk {
         while (persistance < persistanceMin) {
             persistance = (persistanceMax)*random.nextFloat();
         }
-        int seed = (int)(50*random.nextFloat());
+        System.out.println(persistance);
+        int seed = (int)(50 * random.nextFloat());
         System.out.println("Seed:" + seed);
         
         SimplexNoise noise = new SimplexNoise(CHUNK_SIZE, persistance, seed);
@@ -74,34 +84,64 @@ public class Chunk {
         FloatBuffer VertexTextureData = BufferUtils.createFloatBuffer(
             (CHUNK_SIZE * CHUNK_SIZE * CHUNK_SIZE) * 6 * 12);
         
-        for (float x = 0; x < CHUNK_SIZE; x += 1) {
-            for (float z = 0; z < CHUNK_SIZE; z += 1) {
-                for (float y = 0; y < CHUNK_SIZE; y++) {
-                    
-                    //generate height
-                    int height = (int)(startY + Math.abs((int)(CHUNK_SIZE * 
-                        /*100 * */ noise.getNoise((int)x,(int)y,(int)z))));
-                    if (y >= height) {
-                        break;
+        //int count = 0;
+        float height = 0;
+        for (float x = 0; x < CHUNK_SIZE; x++) {
+            for (float z = 0; z < CHUNK_SIZE; z++) {
+                int i = (int) (startX + x * ((300 - startX) / 640));
+                int j = (int) (startZ + z * ((300 - startZ) / 480));
+                //generate height                
+                height = 1+Math.abs(
+                    (startY + (int) (100 * noise.getNoise(i, j))* CUBE_LENGTH));
+                
+                for (float y = 0; y <= height; y++) {
+                    persistance = 0;
+                    while (persistance < persistanceMin) {
+                        persistance = (persistanceMax) * random.nextFloat();
                     }
                     
                     VertexPositionData.put(
                         createCube(
-                            (float) (startX + x
-                            * CUBE_LENGTH),
-                            (float) (y * CUBE_LENGTH
-                            + (int) (CHUNK_SIZE * .8)),
-                            (float) (startZ + z
-                            * CUBE_LENGTH)));
+                            (float) (startX + x * CUBE_LENGTH),
+                            (float) (y * CUBE_LENGTH + (int) (CHUNK_SIZE * -1.0)),
+                            (float) (startZ + z * CUBE_LENGTH) + (int) (CHUNK_SIZE * 1.5)));
                     VertexColorData.put(
                         createCubeVertexCol(
                             getCubeColor(
                                 Blocks[(int) x][(int) y][(int) z])));
-                    VertexTextureData.put(
-                        createTexCube(
-                            (float) 0, 
-                            (float) 0, 
-                            Blocks[(int)(x)][(int)(y)][(int) (z)]));
+                    if (y == height) {
+                        float rand = r.nextFloat();
+                        if (rand < 0.33f) {
+                            VertexTextureData.put(createTexCube(
+                                (float) 0, (float) 0, new Block(
+                                    Block.BlockType.BlockType_Grass)));
+                        } else if (rand > 0.66f) {
+                            VertexTextureData.put(createTexCube(
+                                (float) 0, (float) 0, new Block(
+                                    Block.BlockType.BlockType_Sand)));
+                        } else {
+                            VertexTextureData.put(createTexCube(
+                                (float) 0, (float) 0, new Block(
+                                    Block.BlockType.BlockType_Water)));
+                        }
+
+                    } else if (y == 0) {
+                        VertexTextureData.put(createTexCube(
+                                (float) 0, (float) 0, new Block(
+                                    Block.BlockType.BlockType_Bedrock)));
+                    } else {
+                        float rand = r.nextFloat();
+                        if (rand < .50) {
+                            VertexTextureData.put(createTexCube(
+                                (float) 0, (float) 0, new Block(
+                                    Block.BlockType.BlockType_Stone)));
+                        } else {
+                            VertexTextureData.put(createTexCube(
+                                (float) 0, (float) 0, new Block(
+                                    Block.BlockType.BlockType_Dirt)));
+                        }
+
+                    }
                 }
             }
         }
@@ -119,17 +159,14 @@ public class Chunk {
         glBindBuffer(GL_ARRAY_BUFFER, 0);
     }
 
-
-
     private float[] createCubeVertexCol(float[] CubeColorArray) {
         float[] cubeColors = new float[CubeColorArray.length * 4 * 6];
         for (int i = 0; i < cubeColors.length; i++) {
-            cubeColors[i] = CubeColorArray[i
-                % CubeColorArray.length];
+            cubeColors[i] = CubeColorArray[i % CubeColorArray.length];
         }
         return cubeColors;
     }
-
+ 
     public static float[] createCube(float x, float y, float z) {
         int offset = CUBE_LENGTH / 2;
         return new float[]{
@@ -171,10 +208,10 @@ public class Chunk {
 
     }
 
-    public Chunk(int startX, int startY, int startZ) {
+    public Chunk(int startX, int startY, int startZ, int tex) {
         try {
             texture = TextureLoader.getTexture("PNG",
-                ResourceLoader.getResourceAsStream("terrain.png"));
+                ResourceLoader.getResourceAsStream(texFile[tex]));
         } catch (Exception e) {
             System.out.print(e);
         }
@@ -407,5 +444,4 @@ public class Chunk {
                     x + offset*1, y + offset*2};
         }
     }
-
 }
